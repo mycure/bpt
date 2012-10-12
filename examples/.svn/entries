@@ -1,0 +1,37 @@
+10
+
+dir
+10
+svn+ssh://subversion@repositories.passeism.org/bpt/examples
+svn+ssh://subversion@repositories.passeism.org/bpt
+
+
+
+2011-10-04T07:20:50.188840Z
+10
+julien.quintard
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+211faaa3-78a7-4a58-a14a-7d61629ac431
+
+complex
+dir
+
+strings
+dir
+
+multi-files
+dir
+

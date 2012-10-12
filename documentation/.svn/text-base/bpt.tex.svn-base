@@ -1,0 +1,2773 @@
+%
+% ---------- header -----------------------------------------------------------
+%
+% project       bpt
+%
+% license       BSD
+%
+% file          /home/mycure/bpt/documentation/bpt.tex
+%
+% created       julien quintard   [thu jul 12 18:39:55 2007]
+% updated       julien quintard   [wed mar  5 04:28:00 2008]
+%
+
+%
+% ---------- packages ---------------------------------------------------------
+%
+
+\documentclass[10pt,a4wide]{article}
+
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{a4wide}
+\usepackage{fancyheadings}
+\usepackage{multicol}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{xcolor}
+\usepackage{verbatim}
+\usepackage{ifthen}
+
+\usepackage{aeguill}
+
+\pagestyle{fancy}
+
+\def\N{\mbox{I\hspace{-.13em}N}}
+\def\R{\mbox{I\hspace{-.15em}R}}
+
+\lhead{{\scriptsize bpt.h}}
+\rhead{}
+\rfoot{{\scriptsize EPITA Computer Systems Laboratory}}
+
+\definecolor{functioncolor}{rgb}{0.40,0.00,0.00}
+\definecolor{commandcolor}{rgb}{0.00,0.00,0.40}
+\definecolor{verbatimcolor}{rgb}{0.00,0.40,0.00}
+\definecolor{noticecolor}{rgb}{0.87,0.84,0.02}
+
+\newcommand\name[1]{{\large{\textbf{#1}}}}
+
+\renewcommand\description[1]{
+  \hspace{0.7cm}\textit{Description}
+
+  \begin{tabular}{p{1cm}p{13cm}}
+  & #1
+  \end{tabular}}
+
+\newcommand\declaration[1]{
+  \hspace{0.7cm}\textit{Declaration}
+
+  \begin{tabular}{p{1cm}p{13cm}}
+  & #1
+  \end{tabular}}
+
+\title{bpt.h \\
+       {\scriptsize http://bpt.julienquintard.name}}
+
+\author{{\small Julien Quintard} \\
+        {\scriptsize julien.quintard@epita.fr} \\
+        \\
+        {\small Epita Computer Systems Laboratory} \\
+        {\scriptsize http://www.lse.epita.fr}}
+
+\date{\vspace{1cm}
+      \today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\setlength{\footrulewidth}{0.3pt}
+\setlength{\parindent}{0.3cm}
+\setlength{\parskip}{2ex plus 0.5ex minus 0.2ex}
+
+\newpage
+
+%
+% ---------- overview ---------------------------------------------------------
+%
+
+\section{Overview}
+
+The \textbf{bpt} header file, developed by \textit{Julien Quintard} at the
+\textit{EPITA Computer Systems Laboratory}, is a macro style toolkit for
+managing fully tunable balanced plus trees. These trees can be stored anywhere
+including main memory, hard drive as well as somewhere on another computer
+through the network.
+
+The development of \textit{bpt} comes from a need in highly performant and
+tunable data structures for the \textit{C} language. Below are listed some
+of the guidelines of \textit{bpt}:
+
+\begin{itemize}
+  \item
+    \textit{C} language.
+  \item
+    Highly tunable through the definition of the internal and leaf node
+    structures. Indeed, the programmer must be able to choose what makes
+    a key, a value etc. in the tree.
+  \item
+    The trees managed by \textit{bpt} can actually reside on any storage
+    device as \textit{bpt} provides callbacks for the program to load a
+    node into or unload from the main memory.
+  \item
+    The programmer must be able to create multiple trees in its project.
+  \item
+    The \textit{bpt} interface should be as user-friendly as possible.
+    Especially, the number of arguments must be as small as it could be.
+  \item
+    \textit{bpt} must be powerful enough to allow the programmer to perform
+    modifications depending on the tree's evolution. For example, internal
+    nodes may contain specific fields which have to be updated as frequently
+    as the tree itself.
+\end{itemize}
+
+\textit{bpt} is very flexible and reliable. Due to its generic aspect,
+\textit{bpt} may be slower than specialized balanced+ trees but this
+obvious notice does not make \textit{bpt} a bad implementation of b+trees
+neither a slow one.
+
+\textit{bpt} seems difficult to use, mainly because it relies on extreme
+macro-programming and people are not used to what can be done with the
+\textit{C preprocessor}. Nonetheless, considering the difficult task
+consisting in developing a balanced+ tree data structure, \textit{bpt} can
+be considered as a very simple tool for managing balanced+ trees.
+
+The \textit{bpt} author states that once you have tried and understood
+\textit{bpt}, you will use it everytime you need a data structure. For
+instance, \textit{bpt} is used and could be used for the following type
+of projects:
+
+\begin{itemize}
+  \item
+    \textit{bpt} was used in the memory manager of the
+    \textit{LSE/OS}\footnote{http://www.lse.epita.fr} nano-kernel.
+
+    This implementation showed that \textit{bpt} could be used even in
+    very constrained contexts, in this case without memory allocator.
+  \item
+    The \textit{kaneton}\footnote{http://www.kaneton.org} microkernel
+    project actually uses \textit{bpt} as a data structure alternative in its
+    \textit{set manager}.
+  \item
+    \textit{bpt} could be used to implement a \textit{Distributed Balanced+
+    Tree} as for \textit{Distributed Hash Table}s. Indeed, \textit{bpt}
+    allows the storage of trees' nodes everywhere including hard disk,
+    floppy disk as well as over the network.
+  \item
+    \textit{bpt} could also be used to develop file systems very quickly
+    as the majors parts of a file system are composed of hierarchical
+    data structure including the file hierarchy, inodes' blocks with
+    multiple \textit{UFS}-like indirections etc.
+\end{itemize}
+
+The implementation in \textit{LSE/OS} could have been far more easier
+if another project had been released:
+\textbf{bbam}\footnote{http://bbam.julienquintard.name}. Moreover, the
+development of file systems could also be deeply simplified through
+\textit{bbam}. Unfortunately, this project is not finished yet as the
+author of \textit{bpt} has no time for it. However, if you are interesting
+in extreme \textit{C} generic-programming as well as building a very powerful
+and useful tool over \textit{bpt}, please do not hesitate to contact the
+author.
+
+The remaining of the document details how to build trees using \textit{bpt}
+but also draws a list of the macros and macro-functions provided by
+\textit{bpt}.
+
+In the rest of the document, \textbf{T} defines the template, commonly,
+the name of the tree.
+
+%
+% ---------- balanced trees ---------------------------------------------------
+%
+
+\section{Balanced trees}
+
+This section describes what are the different types of balanced trees.
+
+In a $\beta$-order balanced tree or \textit{b-tree}, each node has $\beta$
+keys and $\beta + 1$ children. The main characteristic of a balanced tree is
+that, if less than fifty percent of a node's entries are used these entries are
+balanced in another node.
+
+This mechanism is very interesting because it always guarantees that a minimum
+nodes are actually used. This also implies some good properties including
+spatial locality which is very interesting for caching. Moreover, this
+characteristic avoids the tree to become deeper than it is necessary.
+
+The balanced tree data structure is very powerful as operations are
+performed in $O(\log_{\beta} \eta)$ -- for $\eta$ the number of $(key, value)$
+tuples stored in the tree -- including insertion, deletion, search etc.
+
+In a \textit{b-tree}, each node entry is composed of a key, data and a
+pointer to a child node.
+
+There exist a bunch of derivations from the \textit{b-trees} including
+\textit{b+trees}, \textit{b*trees} and \textit{b\#trees} for the major ones.
+
+The balanced+ trees are slightly different because internal node entries are
+only composed of a key and the address of a child node. On the contrary,
+leaf nodes entries contain a key and the actual data. This means that data
+are always stored in the leaves.
+
+Below is a figure which illustrates a balanced+ tree:
+
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[scale=0.9]{figures/balanced+tree.pdf}
+  \end{center}
+\end{figure}
+
+\textit{b*trees} differ in that, balancing occurs when less than $\frac{2}{3}$
+of nodes' entries are unused while \textit{b-trees} and \textit{b+trees}
+perform a balancing when half of the entries are unused. These trees can
+easily be built through \textit{bpt} by setting the \textit{balancinga} to
+$75\%$ at the tree initialization time. Indeed, \textit{bpt} allows the
+creation of b+trees, b*trees as well as specialized trees as the balancing
+ratio can be set to any percentage.
+
+Finally, \textit{b\#trees} represent another variant where balancing only
+occur between immediate siblings -- nodes of the same parent.
+
+The \textit{bpt} implementation links every brother nodes in order to
+make balancing, re-ordering as well as iterations easier.
+
+%
+% ---------- architecture -----------------------------------------------------
+%
+
+\section{Architecture}
+
+This section focuses on the description of the interaction between
+\textit{bpt}, the program relying on \textit{bpt} and the actual storage
+device -- in the large sense of the term.
+
+\textit{bpt} provides an interface for managing trees. As \textit{bpt}
+performs operations on some nodes, \textit{bpt} needs these nodes to be
+located in main memory so that it can go through them and modify
+them if it is necessary.
+
+The fact that \textit{bpt} needs some nodes to be loaded in main memory
+does not imply that the whole tree must reside in main memory. Indeed,
+\textit{bpt} uses callbacks to ask the program to load or unload a block into
+or from main memory. For instance, the \texttt{load()} callback takes a
+node \textbf{address} and returns a in-memory loaded node. Since, the tree
+can be stored wherever the programmer wants to -- at the tree creation time --
+the node \textit{address} type must be defined by the programmer itself.
+
+Recall that each internal node contains a \textbf{key} as well as the
+\textit{address} of the child node. Moreover, leaf nodes contain a
+\textit{key} and a \textbf{value} which represents the stored data even
+if the programmer can include whatever he wants in the internal and leaf
+node structures.
+
+Through this explanation, three user-specified types were introduced:
+
+\begin{itemize}
+  \item
+    An \textit{address} represents a location on the storage device.
+
+    Such an address could be a 32-bit main memory address for in-memory
+    trees but it could also be a tuple composed of a 32-bit \textit{IP} address
+    and a path on another file system to the file which contains the block.
+  \item
+    A \textit{key} represents a unique data identifier.
+
+    Note that \textit{bpt} handles collisions -- if the tree was configured
+    for it at its creation time. In such a case, the \textit{value}
+    is used to distinguish the entries in collision.
+  \item
+    A \textit{value} represents the data even though its major role is
+    to distinguish collisions.
+\end{itemize}
+
+Since these types are provided by the programmer at the tree creation time,
+\textit{bpt} cannot understand them, so every field of such types are
+considered as opaque data. As \textit{bpt} needs to compare \textit{keys},
+load nodes from a particular \textit{address} etc., callbacks are provided
+by the program so that it can performs these operations on the behalf of
+\textit{bpt}.
+
+Therefore, callbacks for comparing \textit{addresses}, \textit{keys} and
+\textit{values} must be provided by the program in addition to the
+callbacks used to load and store nodes on the storage device.
+
+The following figure illustrates the interaction between the three
+components, \textit{bpt}, the program and the storage device.
+
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[scale=0.8]{figures/architecture.pdf}
+  \end{center}
+\end{figure}
+
+%
+% ---------- types ------------------------------------------------------------
+%
+
+\section{Types}
+
+This section lists the different types provided by \textit{bpt}. Many of
+these types must be defined by the programmer at the tree creation time.
+
+% bpt
+
+\name{bpt}
+
+\description
+    {
+      This type represents the core structure which holds information
+      on the tree \textit{T}.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt(T)}
+    }
+
+% address
+
+\name{address}
+
+\description
+    {
+      This type represents a location on the storage device.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_addr(T)}
+    }
+
+% key
+
+\name{key}
+
+\description
+    {
+      This type represents a key in the tree \textit{T}.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_key(T)}
+    }
+
+% value
+
+\name{value}
+
+\description
+    {
+      This type defines a value in the tree.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_value(T)}
+    }
+
+% node index
+
+\name{node index}
+
+\description
+    {
+      This type represents a node index.
+
+      \-
+
+      This type is also used for representing a node size as a size is
+      basically the last index plus one.
+
+      \-
+
+      The programmer should take care of using a type large enough for
+      holding the maximum number of entries per node.
+
+      \-
+
+      This type must be signed.
+
+      \-
+
+      The default type \texttt{BPT\_NDI\_T} is set to: signed 32-bit.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_ndi(T)}
+    }
+
+% unused array index
+
+\name{\textit{unused} array index}
+
+\description
+    {
+      This type represents an index in the array of \textit{unused} addresses.
+
+      \-
+
+      This type must be signed.
+
+      \-
+
+      The default type \texttt{BPT\_UNI\_T} is set to: signed 32-bit.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_uni(T)}
+    }
+
+% nodes
+
+\name{nodes}
+
+\description
+    {
+      This type is used for variables holding the number of nodes contained
+      in the tree \textit{T}.
+
+      \-
+
+      The default type \texttt{BPT\_NODES\_T} is set to: unsigned 32-bit.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_nodes(T)}
+    }
+
+% height
+
+\name{height}
+
+\description
+  {
+    The variables of this type hold the tree \textit{T}'s height.
+
+    \-
+
+    The default type \texttt{BPT\_HEIGHT\_T} is set to: unsigned 16-bit.
+  }
+
+\declaration
+    {
+      \texttt{t\_bpt\_height(T)}
+    }
+
+% node
+
+\name{node}
+
+\description
+    {
+      This type represents a node address. Obviously, this type is a strict
+      alias of \texttt{t\_bpt\_addr(T)}.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_node(T)}
+    }
+
+% in-main-memory
+
+\name{in-main-memory}
+
+\description
+    {
+      This type refers to a node loaded into main memory.
+
+      \-
+
+      This type is actually a structure composed of two fields.
+
+      \begin{itemize}
+	\item
+	  \texttt{t\_bpt\_node(T) addr} which contains the address of the
+	  node on the device.
+	\item
+	  \texttt{void* buf} which contains the node's address in main memory.
+      \end{itemize}
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_imm(T)}
+    }
+
+% callback context
+
+\name{callback context}
+
+\description
+    {
+      Every time an operation is performed on a leaf node, \textit{bpt}
+      informs the program of this event -- if the programmer configured
+      the tree for handling callbacks.
+
+      \-
+
+      This type represents a callback context which contains information
+      about the operation performed on the tree.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_cbctx(T)}
+    }
+
+% unused array
+
+\name{unused array}
+
+\description
+    {
+      This type is a structure which contains addresses of \textit{unused}
+      blocks on the device.
+
+      \-
+
+      This structure is composed of two fields:
+
+      \begin{itemize}
+	\item
+	  \texttt{t\_bpt\_addr(T)* array} is the array of \textit{unused}
+          blocks.
+	\item
+          \texttt{t\_bpt\_uni(T) index} contains the index of the last
+	  \textit{unused} address in the array.
+
+	  \-
+
+	  This index can be negative if there is no \textit{unused} block in
+          the array.
+      \end{itemize}
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_unused(T)}
+    }
+
+% head
+
+\name{head}
+
+\description
+    {
+      This type represents the meta-data contained in each node for
+      describing it and is composed of:
+
+      \-
+
+      \begin{itemize}
+	\item
+	  \texttt{t\_bpt\_type type} defines the type of node which can be
+	  either \texttt{BPT\_TYPE\_INTERNAL} or \texttt{BPT\_TYPE\_LEAF}.
+	\item
+	  \texttt{t\_bpt\_node(T) parent} contains the address of the parent
+	  node.
+	\item
+	  \texttt{t\_bpt\_node(T) prv} contains the address of the previous
+	  node.
+
+	  \-
+
+	  Recall that nodes of the same level in the tree are chained in
+	  a linked list.
+	\item
+	  \texttt{t\_bpt\_node(T) nxt} contains the address of the next node in
+          the linked list.
+      \end{itemize}
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_head(T)}
+    }
+
+% internal entry
+
+\name{internal entry}
+
+\description
+    {
+      User-defined structure which describes an internal node entry.
+
+      \-
+
+      Such an entry must contain at least two fields of the following types so
+      that \textit{bpt} can use them to go through the tree.
+
+      \begin{itemize}
+	\item
+	  \texttt{t\_bpt\_key(T)}
+	\item
+	  \texttt{t\_bpt\_node(T)}
+      \end{itemize}
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_inentry(T)}
+    }
+
+% leaf entry
+
+\name{leaf entry}
+
+\description
+    {
+      User-defined structure which describes a leaf node entry.
+
+      \-
+
+      As for the \texttt{t\_bpt\_inentry} type, this structure must contain
+      fields with the following types:
+
+      \begin{itemize}
+	\item
+	  \texttt{t\_bpt\_key(T)}
+	\item
+	  \texttt{t\_bpt\_value(T)}
+      \end{itemize}
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_lfentry(T)}
+    }
+
+% entry
+
+\name{entry}
+
+\description
+    {
+      This type represents the location of a precise entry in the tree.
+
+      \-
+
+      This type is used by functions, among others, that manage collisions.
+
+      \-
+
+      This structure is composed of two fields:
+
+      \begin{itemize}
+	\item
+	  \texttt{t\_bpt\_node(T) node} which contains the address of the node
+	  containing the entry.
+	\item
+	  \texttt{t\_bpt\_ndi(T) ndi} specifies the node index corresponding
+	  to the entry.
+      \end{itemize}
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_entry(T)}
+    }
+
+% load callback
+
+\name{load callback}
+
+\description
+    {
+      This type represents a function pointer on a load callback.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_load\_fn(T)}
+    }
+
+% unload callback
+
+\name{unload callback}
+
+\description
+    {
+      This type represents an unload callback function pointer.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_unload\_fn(T)}
+    }
+
+% callback
+
+\name{callback}
+
+\description
+    {
+      This type represents the callback function pointer which is triggered
+      every time a modification is performed on the tree \textit{T}.
+
+      \-
+
+      If the user decides not to use this feature, the flag
+      \texttt{BPT\_FLAG\_CALLBACK} must not be set at the initialization time.
+      Moreover, the \texttt{callback()} pointer argument to the initialization
+      function should be set to \texttt{NULL}.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_cb\_fn(T)}
+    }
+
+% address comparison callback
+
+\name{address comparison callback}
+
+\description
+    {
+      This user-defined callback compares two addresses.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_addrcmp\_fn(T)}
+    }
+
+% key comparison callback
+
+\name{key comparison callback}
+
+\description
+    {
+      This callback compares two keys.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_keycmp\_fn(T)}
+    }
+
+% valure comparison callback
+
+\name{value comparison callback}
+
+\description
+    {
+      This callback compares two values.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_valcmp\_fn(T)}
+    }
+
+%
+% ---------- building a tree --------------------------------------------------
+%
+
+\section{Building a tree}
+
+This section presents the steps to follow in order to build a \textit{bpt}
+tree.
+
+\textit{bpt} provides a macro-function \texttt{bpt\_make()} which builds
+everything in a single call. However, depending on the project, especially
+with multiples files, additional macro-function calls are necessary.
+
+% make
+
+\name{make}
+
+\description
+    {
+      \texttt{bpt\_make()} generates everything related to the given tree name
+      \textit{T} including types, prototypes and functions.
+    }
+
+\declaration
+    {
+      \begin{tabular}{p{1.3cm}p{10cm}}
+	\texttt{bpt\_make(} & \texttt{T,} \\
+	&                     \texttt{t\_ndi, t\_uni, t\_nodes, t\_height,} \\
+	&                     \texttt{t\_addr, t\_key, t\_value,} \\
+	&                     \texttt{t\_inentry, t\_lfentry,} \\
+        &                     \texttt{key, value)} \\
+      \end{tabular}
+
+      \-
+
+      This macro-function takes many arguments which are described next:
+
+      \begin{itemize}
+        \item
+	  \texttt{T} represents the template, commonly a unique tree name.
+	\item
+	  \texttt{t\_ndi} represents the node index type:
+	  \texttt{t\_bpt\_ndi(T)}.
+	\item
+	  \texttt{t\_uni} represents the \textit{unused} array index type:
+	  \texttt{t\_bpt\_uni(T)}.
+	\item
+	  \texttt{t\_nodes} will give \texttt{t\_bpt\_nodes(T)}, i.e the type
+          containing the number of nodes in the whole tree.
+	\item
+	  \texttt{t\_height} represents the tree's height type:
+	  \texttt{t\_bpt\_height(T)}.
+	\item
+	  \texttt{t\_addr} represents an device address type:
+	  \texttt{t\_bpt\_addr(T)}.
+	\item
+	  \texttt{t\_key} represents the key type: \texttt{t\_bpt\_key(T)}.
+	\item
+	  \texttt{t\_value} represents the value type:
+	  \texttt{t\_bpt\_value(T)}.
+	\item
+	  \texttt{t\_inentry} represents the internal node structure:
+	  \texttt{t\_bpt\_inentry(T)}.
+	\item
+	  \texttt{t\_lfentry} represents the leaf node structure:
+	  \texttt{t\_bpt\_lfentry(T)}.
+	\item
+	  \texttt{key} indicates the name of the key field in the
+	  \texttt{t\_bpt\_inentry} and \texttt{t\_bpt\_lfentry} structures.
+	\item
+	  \texttt{value} indicates the name of the value field in the same
+	  structures.
+      \end{itemize}
+
+      Once this function is called, the tree \textit{T} is built and the
+      programmer just needs to call the functions related to his tree for
+      initializing it, adding $(key, value)$ pairs etc.
+    }
+
+Note that the parameters \textit{key} and \textit{value} indicate the
+name of the field which will play these r\^oles. Besides, these
+parameters can be used as path to the desired fields as shown below:
+
+\begin{verbatim}
+  struct          s_myinentry
+  {
+    union
+    {
+      struct
+      {
+        int       field;
+        short     donotknow;
+      } s;
+      char        anotherfield;
+    } u;
+  };
+
+  struct          s_mylfentry
+  {
+    union
+    {
+      struct
+      {
+        int       field;
+        short     donotknow;
+      } s;
+      char        anotherfield;
+    } u;
+    char          unknown0;
+    short         unknown1;
+    int           unknown2;
+  };
+
+  bpt_make(mytree,
+           BPT_NDI_T, BPT_UNI_T, BPT_NODES_T, BPT_HEIGHT_T,
+           int, short, int,
+           struct s_myinentry, struct s_mylfentry,
+           u.s.donotknow, u.s.field);
+\end{verbatim}
+
+In this example, the \textit{key} and \textit{value} parameters are
+specified as paths through the structures.
+
+If the project in which \textit{bpt} is used is composed of multiple files,
+then, the macro-function \texttt{bpt\_make()} must not be used. Instead,
+the macro-functions \texttt{bpt\_make\_types()}, \texttt{bpt\_make\_protos()}
+and \texttt{bpt\_make\_functions()} must be used.
+
+Note that \texttt{bpt\_make()} is basically composed of calls to the
+three aforementioned macro-functions.
+
+% make types
+
+\name{make types}
+
+\description
+    {
+      This macro-function generates the types related to the tree \textit{T}.
+
+      \-
+
+      This macro-function must be called only once for the tree \textit{T}.
+    }
+
+\declaration
+    {
+      \begin{tabular}{p{2.4cm}p{10cm}}
+	\texttt{bpt\_make\_types(} & \texttt{T,} \\
+	&                      \texttt{t\_ndi, t\_uni, t\_nodes, t\_height,} \\
+	&                      \texttt{t\_addr, t\_key, t\_value,} \\
+	&                      \texttt{t\_inentry, t\_lfentry)} \\
+      \end{tabular}
+    }
+
+% make protos
+
+\name{make protos}
+
+\description
+    {
+      This macro-function generates the prototypes.
+
+      \-
+
+      This macro-function should be called in every source file that
+      needs to use the tree \textit{T}.
+    }
+
+\declaration
+    {
+      \begin{tabular}{p{2.5cm}p{10cm}}
+	\texttt{bpt\_make\_protos(} & \texttt{T)} \\
+      \end{tabular}
+    }
+
+% make functions
+
+\name{make functions}
+
+\description
+    {
+      Finally, this macro-function generates the functions.
+
+      \-
+
+      As for \texttt{bpt\_make\_types()}, this macro-function must
+      be called only once for the tree \textit{T}.
+    }
+
+\declaration
+    {
+      \begin{tabular}{p{3.1cm}p{10cm}}
+	\texttt{bpt\_make\_functions(} & \texttt{T,} \\
+	&                                \texttt{key, value)} \\
+      \end{tabular}
+    }
+
+%
+% ---------- _unused_ array ---------------------------------------------------
+%
+
+\section{\textit{Unused} array}
+
+Since the trees evolve as entries are inserted, modified, removed etc.
+\textit{bpt} manages the creation and deletion of nodes as well as the
+migration of entries in order to balance the tree.
+
+For exemple, the creation of a node implies for \textit{bpt} to know
+where to store the new node on the storage device. In other words, \textit{bpt}
+needs to know the address of unused areas on the storage device, where the new
+nodes could be stored.
+
+As a result, every general operation including \texttt{add()},
+\texttt{modify()}, \texttt{remove()} etc. takes an argument which represents
+an array of unused areas' addresses on the storage device which could be
+used by \textit{bpt} for the creation of new nodes.
+
+Even though the need of such array of unused addresses sounds obvious for
+operations related to the creation of nodes, note that this array is also
+necessary for deletion operations. Indeed, deleting a node means that
+an area of the storage becomes available. The address of this area
+is then entered in the \textit{unused} array so that the program can use
+this area for something else.
+
+\textit{bpt} provides five macro-functions that return the size of the
+\textit{unused} array to provide according to the operation about to be
+performed.
+
+\begin{enumerate}
+  \item
+    \texttt{BPT\_INIT\_SIZE()} for the initialization process.
+  \item
+    \texttt{BPT\_ADD\_SIZE(t\_bpt(T)* bpt)} for additions.
+  \item
+    \texttt{BPT\_MODIFY\_SIZE(t\_bpt(T)* bpt)} for modifications.
+  \item
+    \texttt{BPT\_REMOVE\_SIZE(t\_bpt(T) *bpt)} for removals.
+  \item
+    \texttt{BPT\_CLEAN\_SIZE(t\_bpt(T)* bpt)} for the cleaning process.
+\end{enumerate}
+
+These macro-functions return the size of the array, but do not indicate whether
+the array has to be filled with addresses of unused blocks.
+
+Therefore, five other macro-functions are provided for returning the number
+of addresses \textit{bpt} could need according to the operation about to
+be invoked.
+
+\begin{enumerate}
+  \item
+    \texttt{BPT\_INIT\_ALLOC()} for the initialization process.
+  \item
+    \texttt{BPT\_ADD\_ALLOC(t\_bpt(T)* bpt)} for additions.
+  \item
+    \texttt{BPT\_MODIFY\_ALLOC(t\_bpt(T)* bpt)} for modifications.
+  \item
+    \texttt{BPT\_REMOVE\_ALLOC(t\_bpt(T)* bpt)} for removals.
+  \item
+    \texttt{BPT\_CLEAN\_ALLOC(t\_bpt(T)* bpt)} for the cleaning process.
+\end{enumerate}
+
+These macros allows the program to provide an array with the exact size and
+the right number of unused blocks' addresses.
+
+The reader should have noticed that the number of \textit{unused} addresses
+to provide to \textit{bpt} as well as the size of the array evolve with the
+tree, especially according to the height of \textit{T}. Therefore, the
+\textit{unused} array must be dynamically allocated.
+
+However, in some execution contexts, the programmeur might not be able to
+use dynamic memory allocators.
+
+The following discusses the different solutions for building such an array
+of unused storage areas.
+
+% dynamic allocation
+
+\subsubsection*{Dynamic allocation}
+
+The common development environnement is the userland \textit{POSIX}-line one.
+In that case, a process can dynamically allocate memory through the
+\texttt{malloc()} function of the \textit{C Standard Library}.
+
+\begin{verbatim}
+  t_bpt_uni(T)    alloc = BPT_ADD_ALLOC(bpt);
+  t_bpt_uni(T)    size = BPT_ADD_SIZE(bpt);
+  t_bpt_unused(T) unused;
+
+  if ((unused->array = malloc(size * sizeof(t_bpt_addr(T)))) == NULL)
+    perror(``malloc'');
+
+  unused->index = alloc - 1;
+
+  [...]
+
+  free(unused->array);
+\end{verbatim}
+
+% limited dynamic allocation
+
+\subsubsection*{Limited dynamic allocation}
+
+Now suppose you are using a modern \textit{C} compiler but that you do
+not have access to any dynamic memory allocator. In such a context, allocating
+memory in a dynamic way is still possible through the stack frame as
+shown below:
+
+\begin{verbatim}
+  t_bpt_uni(T)    alloc = BPT_ADD_ALLOC(bpt);
+  t_bpt_uni(T)    size = BPT_ADD_SIZE(bpt);
+  t_bpt_addr(T)   array[size];
+  t_bpt_unused(T) unused;
+
+  unused->array = array;
+  unused->index = alloc - 1;
+
+  [...]
+\end{verbatim}
+
+In this example, the \textit{unused} array is dynamically allocated onto the
+stack.
+
+This technique suffers from limitations. Indeed, the stack size is pretty
+limited. However, this constraint is irrelevant for \textit{bpt} as the
+tree's high is likely to be very small, so does the \textit{unused} array.
+
+% no dynamic allocation
+
+\subsubsection*{No dynamic allocation}
+
+Finally, if the execution context does not allow any dynamic allocation,
+then, the programmer has to come back to static allocation by pre-computing
+the maximum size his tree could reach.
+
+Recall that the \textit{unused} array contains addresses of unused blocks on
+the storage device. The \textit{worst case} array size for a given expected
+maximum tree's height is:
+
+\begin{equation}
+  size = 2 * \gamma + 1
+\end{equation}
+
+with $\gamma$ the maximum expected tree's height. This array size is
+equivalent to the sum of the required sizes for a deletion followed by an
+addition \textit{i.e} a modification.
+
+Let's now see how to compute the expected maximum tree's height given
+the maximum number of tuples the tree would be able to store:
+
+\begin{equation}
+  \gamma = \log_{\lambda}(\frac{\eta}{\kappa}) + 1
+\end{equation}
+
+with $\eta$ the maximum number of $(key, value)$ tuples the tree will be
+capable of holding, $\lambda$ the number of internal nodes' entries and
+$\kappa$ the number of leaf nodes' entries.
+
+%
+% ---------- api --------------------------------------------------------------
+%
+
+\section{API}
+
+This sections describes the \textit{bpt} \textit{API} which is composed of
+template-dependent macro-functions, template-independent macro-functions
+as well as end-user macro-functions.
+
+%
+% template-dependent macro-functions
+%
+
+\subsection{Template-dependent macro-functions}
+
+% get head
+
+\name{get head}
+
+\description
+    {
+      This macro-function returns the field \textit{elem} of the node
+      descriptor \textit{node}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_GET\_HEAD(T, t\_bpt\_imm(T)* node, elem)}
+    }
+
+% set head
+
+\name{set head}
+
+\description
+    {
+      This macro-function sets the value \textit{value} to the field
+      \textit{elem} of the node descriptor \textit{node}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_SET\_HEAD(T, t\_bpt\_imm(T)* node, elem, value)}
+    }
+
+% internal entry
+
+\name{internal entry}
+
+\description
+    {
+      This macro-function returns the address of the internal node
+      \textit{node}'s entry at the index \textit{ndi}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_INENTRY(T, t\_bpt\_imm(T)* node, t\_bpt\_ndi(T) ndi)}
+    }
+
+% leaf entry
+
+\name{leaf entry}
+
+\description
+    {
+      This macro-function returns the address of the leaf node
+      \textit{node}'s entry at the index \textit{ndi}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_LFENTRY(T, t\_bpt\_imm(T)* node, t\_bpt\_ndi(T) ndi)}
+    }
+
+% initialize entry
+
+\name{initialize entry}
+
+\description
+    {
+      This macro-function initializes the node \textit{node} by setting
+      the \textit{ndi} entries of the node to zero.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_INIT\_ENTRY(T, t\_bpt\_imm(T)* node, t\_bpt\_ndi(T) ndi)}
+    }
+
+% import entry
+
+\name{import entry}
+
+\description
+    {
+      This macro-function imports the entry \textit{entry} into the tree
+      by copying it in node \textit{node} at the index \textit{ndi}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_IMPORT\_ENTRY(T, t\_bpt\_imm(T)* node,
+                                 t\_bpt\_ndi(T) ndi, entry)}
+    }
+
+% import internal entry
+
+\name{import internal entry}
+
+\description
+    {
+      This macro-function is a specialization of \texttt{BPT\_IMPORT\_ENTRY()}
+      for internal nodes' entries.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_IMPORT\_INENTRY(T, t\_bpt\_imm(T)* node,
+                                   t\_bpt\_ndi(T) ndi,}
+
+      \hspace{3.5cm}\texttt{t\_bpt\_inentry(T)* entry)}
+    }
+
+% import leaf entry
+
+\name{import leaf entry}
+
+\description
+    {
+      This macro-function is a specialization of \texttt{BPT\_IMPORT\_ENTRY()}
+      for leaf nodes' entries.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_IMPORT\_LFENTRY(T, t\_bpt\_imm(T)* node,
+                                   t\_bpt\_ndi(T) ndi,}
+
+      \hspace{3.5cm}\texttt{t\_bpt\_lfentry(T)* entry)}
+    }
+
+% export entry
+
+\name{export entry}
+
+\description
+    {
+      This macro-function extracts an entry from the tree and copy it
+      in \textit{entry}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_EXPORT\_ENTRY(T, t\_bpt\_imm(T)* node,
+                                 t\_bpt\_ndi(T) ndi, entry)}
+    }
+
+% copy entry
+
+\name{copy entry}
+
+\description
+    {
+      This macro-function copies an entry from \textit{node1} index
+      \textit{nd1} to \textit{node2} index \textit{ndi2}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_COPY\_ENTRY(T, t\_bpt\_imm(T)* node1,
+                               t\_bpt\_imm(T)* node2,}
+
+      \hspace{2.8cm}\texttt{t\_bpt\_ndi(T) ndi1, t\_bpt\_ndi(T) ndi2)}
+    }
+
+% swap entries
+
+\name{swap entries}
+
+\description
+    {
+      This macro-function swaps two entries within the node \textit{node}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_SWAP\_ENTRIES(T, t\_bpt\_imm(T)* node, t\_bpt\_ndi(T) ndi1,}
+
+      \hspace{3.2cm}\texttt{t\_bpt\_ndi(T) ndi2)}
+    }
+
+% get entry
+
+\name{get entry}
+
+\description
+    {
+      This macro-function returns the field \textit{elem} of the entry
+      stored in the node referenced by the descriptor \textit{node} at
+      the index \textit{ndi}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_GET\_ENTRY(T, t\_bpt\_imm(T)* node,
+                              t\_bpt\_ndi(T) ndi, elem)}
+    }
+
+% get internal entry
+
+\name{get internal entry}
+
+\description
+    {
+      This macro-function is a specialization of \texttt{BPT\_GET\_ENTRY()}
+      for internal nodes.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_GET\_INENTRY(T, t\_bpt\_imm(T)* node,
+                                t\_bpt\_ndi(T) ndi, elem)}
+    }
+
+% get leaf entry
+
+\name{get leaf entry}
+
+\description
+    {
+      This macro-function is a specialization of \texttt{BPT\_GET\_ENTRY()}
+      for leaf nodes.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_GET\_LFENTRY(T, t\_bpt\_imm(T)* node,
+                                t\_bpt\_ndi(T) ndi, elem)}
+    }
+
+% set entry
+
+\name{set entry}
+
+\description
+    {
+      This macro-function sets the field \textit{elem} of the entry located
+      in \textit{node} at index \textit{ndi}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_SET\_ENTRY(T, t\_bpt\_imm(T)* node, t\_bpt\_ndi(T) ndi,
+                              elem, value)}
+    }
+
+% set internal entry
+
+\name{set internal entry}
+
+\description
+    {
+      This macro-function is a specialization of \texttt{BPT\_SET\_ENTRY()}
+      for internal nodes.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_SET\_INENTRY(T, t\_bpt\_imm(T)* node, t\_bpt\_ndi(T) ndi,
+                                elem, value)}
+    }
+
+% set leaf entry
+
+\name{set leaf entry}
+
+\description
+    {
+      This macro-function is a specialization of \texttt{BPT\_SET\_ENTRY()}
+      for leaf nodes.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_SET\_LFENTRY(T, t\_bpt\_imm(T)* node, t\_bpt\_ndi(T) ndi,
+                                elem, value)}
+    }
+
+% get _this_ entry
+
+\name{get \textit{this} entry}
+
+\description
+    {
+      This macro-function returns the field \textit{elem} of an in-memory
+      entry \textit{ptr}. The type \textit{type} of the in-memory entry
+      can be either internal or leaf.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_GET\_THIS\_ENTRY(T, t\_bpt\_type type, void* ptr, elem)}
+    }
+
+% balancing
+
+\name{balancing}
+
+\description
+    {
+      This macro-function returns the minimum number of entries the
+      node \textit{node} must contain in order to avoid a balacing.
+      performed.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_BALANCING(T, t\_bpt(T)* bpt, t\_bpt\_imm(T)* node)}
+    }
+
+% number of keys
+
+\name{number of keys}
+
+\description
+    {
+      This macro-function returns the number of entries the node \textit{node}
+      can hold.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_NKEYS(T, t\_bpt(T)* bpt, t\_bpt\_imm(T)* node)}
+    }
+
+%
+% template-independent macro-functions
+%
+
+\subsection{Template-independent macro-functions}
+
+% nodes
+
+\name{nodes}
+
+\description
+    {
+      This macro-function returns the current number of nodes composing
+      the tree.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_NODES(t\_bpt(T)* bpt)}
+    }
+
+% internal node keys
+
+\name{internal node keys}
+
+\description
+    {
+      This macro-function returns the number of entries an internal node can
+      hold.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_NIKEYS(t\_bpt(T)* bpt)}
+    }
+
+% leaf node keys
+
+\name{leaf node keys}
+
+\description
+    {
+      This macro-function returns the number of entries a leaf node can hold.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_LFKEYS(t\_bpt(T)* bpt)}
+    }
+
+% height
+
+\name{height}
+
+\description
+    {
+      This macro-function returns the current height of the tree.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_HEIGHT(t\_bpt(T)* bpt)}
+    }
+
+% copy node
+
+\name{copy node}
+
+\description
+    {
+      This macro-function copies a node into another.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_COPY\_NODE(t\_bpt(T)* bpt, t\_bpt\_imm(T)* node1,
+                              t\_bpt\_imm(T)* node2)}
+    }
+
+% load
+
+\name{load}
+
+\description
+    {
+      This macro-function calls the user-defined \texttt{load()} callback.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_LOAD(t\_bpt(T)* bpt, t\_bpt\_imm(T)* node,
+                        t\_bpt\_addr(T) addr)}
+    }
+
+% unload
+
+\name{unload}
+
+\description
+    {
+      This macro-function calls the user-defined \texttt{unload()} callback.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_UNLOAD(t\_bpt(T)* bpt, t\_bpt\_imm(T)* node)}
+    }
+
+% address compare
+
+\name{address compare}
+
+\description
+    {
+      This macro-function calls the user-defined \texttt{addrcmp()} callback.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_ADDRCMP(t\_bpt(T)* bpt, t\_bpt\_addr(T) addr1,
+                           t\_bpt\_addr(T) addr2)}
+    }
+
+% key compare
+
+\name{key compare}
+
+\description
+    {
+      This macro-function calls the user-defined \texttt{keycmp()} callback.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_KEYCMP(t\_bpt(T)* bpt, t\_bpt\_key(T) key1,
+                          t\_bpt\_key(T) key2)}
+    }
+
+% value compare
+
+\name{value compare}
+
+\description
+    {
+      This macro-function calls the user-defined \texttt{valcmp()} callback.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_VALCMP(t\_bpt(T)* bpt, t\_bpt\_val(T) val1,
+                          t\_bpt\_value(T) val2)}
+    }
+
+% callback
+
+\name{callback}
+
+\description
+    {
+      This macro-function calls the user-defined \textit{callback()} callback.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_CALLBACK(t\_bpt(T)* bpt, t\_bpt\_cbctx(T)* cbctx)}
+    }
+
+% get root
+
+\name{get root}
+
+\description
+    {
+      This macro-function returns the root node address.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_GET\_ROOT(t\_bpt(T)* bpt)}
+    }
+
+% set root
+
+\name{set root}
+
+\description
+    {
+      This macro-function sets the root node address to \textit{root}.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_SET\_ROOT(t\_bpt(T)* bpt, t\_bpt\_addr(T) root)}
+    }
+
+% initialize callback context
+
+\name{initialize callback context}
+
+\description
+    {
+      This macro-function initializes the callback context.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_INIT\_CBCTX(t\_bpt(T)* bpt, t\_bpt\_cbctx(T)* cbctx)}
+    }
+
+% set callback context
+
+\name{set callback context}
+
+\description
+    {
+      This macro-function sets a callback context value.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_SET\_CBCTX(t\_bpt(T)* bpt, t\_bpt\_type type,}
+
+      \hspace{2.5cm}\texttt{t\_bpt\_ctctx(T)* cbctx, elem, value)}
+    }
+
+% reserve
+
+\name{reserve}
+
+\description
+    {
+      This macro-function reserves an unused block from the \textit{unused}
+      array.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_RESERVE(t\_bpt(T)* bpt, t\_bpt\_unused(T)* unused,}
+
+      \hspace{2.3cm}\texttt{t\_bpt\_addr(T)* var)}
+    }
+
+% release
+
+\name{release}
+
+\description
+    {
+      This macro-function releases a previously reserved block.
+    }
+
+\declaration
+    {
+      \texttt{BPT\_RELEASE(t\_bpt(T)* bpt, t\_bpt\_unused(T)* unused,}
+
+      \hspace{2.3cm}\texttt{t\_bpt\_addr(T) var)}
+    }
+
+%
+% end-user macro-functions
+%
+
+\subsection{End-user macro-functions}
+
+% initialize
+
+\name{initialize}
+
+\description
+    {
+      This function initializes a previously generated tree.
+
+      \-
+
+      \textit{nodesz} represents the node size in bytes.
+
+      \-
+
+      \textit{uaddr}, \textit{ukey} and \textit{uval} specify the values
+      representing an unused address, key and value, respectively.
+
+      \-
+
+      \textit{flags} specifies the tree flags: \texttt{BPT\_FLAG\_COLLIDE}
+      for enabling collisions handling, \texttt{BPT\_FLAG\_CALLBACK} for
+      activating the callback \texttt{callback()} and \texttt{BPT\_FLAG\_ZERO}
+      for no flags.
+
+      \-
+
+      \textit{balancing} specifies the threshold under which the nodes'
+      entries are re-balanced. Although every value comprised in $]0, 100[$
+      is accepted, macros are provided: \texttt{BPT\_BALANCING\_PLUS} for
+      balanced+ trees \textit{i.e} $50\%$ and \texttt{BPT\_BALANCING\_STAR} for
+      balanced* trees \textit{i.e} $75\%$.
+
+      \-
+
+      \textit{load}, \textit{unload}, \textit{addrcmp}, \textit{keycmp}
+      \textit{valcmp} and \textit{callback} specify the callback functions
+      address. Note that \textit{callback} is optional depending on the
+      flags.
+
+      \-
+
+      \textit{data} is user-specific and is stored in the \textit{bpt}
+      core structure.
+
+      \-
+
+      Finally, \textit{unused} specifies the \textit{unused} array for
+      the initialization process.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_init(T, t\_bpt(T)* bpt,}
+
+      \hspace{2.4cm}\texttt{t\_bpt\_ndi(T) nodesz, t\_bpt\_addr(T) uaddr,}
+
+      \hspace{2.4cm}\texttt{t\_bpt\_key(T) ukey, t\_bpt\_value(T) uval,}
+
+      \hspace{2.4cm}\texttt{t\_bpt\_flags flags, BPT\_BALANCING\_T balancing,}
+
+      \hspace{2.4cm}\texttt{t\_bpt\_load\_fn(T) load,
+                            t\_bpt\_unload\_fn(T) unload,}
+
+      \hspace{2.4cm}\texttt{t\_bpt\_addrcmp\_fn(T) addrcmp,
+                            t\_bpt\_keycmp\_fn(T) keycmp,}
+
+      \hspace{2.4cm}\texttt{t\_bpt\_valcmp\_fn(T) valcmp,
+                            t\_bpt\_cb\_fn(T) callback,}
+
+      \hspace{2.4cm}\texttt{void* data, t\_bpt\_unused(T)* unused)}
+    }
+
+% add
+
+\name{add}
+
+\description
+    {
+      This macro-function adds a record -- a leaf entry -- into the tree
+      \textit{T}.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_add(T, t\_bpt(T)* bpt, t\_bpt\_lfentry(T)* lfentry,}
+
+      \hspace{2.2cm}\texttt{t\_bpt\_unused(T)* unused)}
+    }
+
+% modify
+
+\name{modify}
+
+\description
+    {
+      This macro-function modifies the entry with the key \textit{key}
+      by inserting the new record \textit{lfentry}.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_modify(T, t\_bpt(T)* bpt, t\_bpt\_key(T) key,}
+
+      \hspace{2.8cm}\texttt{t\_bpt\_lfentry(T)* lfentry,
+                            t\_bpt\_unused(T)* unused)}
+    }
+
+% remove
+
+\name{remove}
+
+\description
+    {
+      This macro-function removes the entry identified by \textit{key}.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_remove(T, t\_bpt(T)* bpt, t\_bpt\_key(T) key,}
+
+      \hspace{2.8cm}\texttt{t\_bpt\_unused(T)* unused)}
+    }
+
+% search
+
+\name{search}
+
+\description
+    {
+      This macro-function looks up for the entry with the key \textit{key}.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_search(T, t\_bpt(T)* bpt, t\_bpt\_key(T) key,}
+
+      \hspace{2.8cm}\texttt{t\_bpt\_entry(T)* entry)}
+    }
+
+% clean
+
+\name{clean}
+
+\description
+    {
+      This macro-function cleans the tree and returns an \textit{unused}
+      array filled with the addresses of all the nodes which were composing
+      the tree.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_clean(T, t\_bpt(T)* bpt, t\_bpt\_unused(T)* unused)}
+    }
+
+% first entry
+
+\name{first entry}
+
+\description
+    {
+      This macro-function returns the first entry of the specified node
+      \textit{node}.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_first\_entry(T, t\_bpt(T)* bpt, t\_bpt\_imm(T)* node,}
+
+      \hspace{3.7cm}\texttt{t\_bpt\_ndi(T)* first)}
+    }
+
+% last entry
+
+\name{last entry}
+
+\description
+    {
+      This macro-function returns the last entry of the specified node
+      \textit{node}.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_last\_entry(T, t\_bpt(T)* bpt, t\_bpt\_imm(T)* node,}
+
+      \hspace{3.5cm}\texttt{t\_bpt\_ndi(T)* last)}
+    }
+
+% previous entry
+
+\name{previous entry}
+
+\description
+    {
+      This macro-function returns the location of the entry preceding
+      the entry \textit{current}.
+
+      \-
+
+      The \textit{opts} argument can take \texttt{BPT\_OPT\_NODE} for
+      looking for a previous entry in the current node or
+      \texttt{BPT\_OPT\_TREE} for returning the previous entry in the
+      whole tree.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_prev\_entry(T, t\_bpt(T)* bpt,
+                                   t\_bpt\_entry(T) current,}
+
+      \hspace{3.6cm}\texttt{t\_bpt\_entry(T)* previous,
+                            t\_bpt\_opts opts)}
+    }
+
+% next entry
+
+\name{next entry}
+
+\description
+    {
+      This macro-function returns the location of the entry following
+      the entry \textit{current}.
+
+      \-
+
+      The \textit{opts} argument can take \texttt{BPT\_OPT\_NODE} for
+      looking for the next entry in the current node or
+      \texttt{BPT\_OPT\_TREE} for returning the next entry in the
+      whole tree.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_next\_entry(T, t\_bpt(T)* bpt,
+                                   t\_bpt\_entry(T) current,}
+
+      \hspace{3.6cm}\texttt{t\_bpt\_entry(T)* next,
+                            t\_bpt\_opts opts)}
+    }
+
+% search entry
+
+\name{search entry}
+
+\description
+    {
+      This macro-function looks for an entry in the specified node
+      \textit{node}.
+
+      \-
+
+      \textit{opts} can take the following values: \texttt{BPT\_OPT\_PERFECT}
+      looks for an entry with the exact key \textit{key} while
+      \texttt{BPT\_OPT\_PARTIAL} looks for an entry having an equal or
+      highest -- but smallest -- key.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_search\_entry(T, t\_bpt(T)* bpt, t\_bpt\_imm(T)* node,}
+
+      \hspace{3.9cm}\texttt{t\_bpt\_key(T) key, t\_bpt\_ndi(T)* ndi,}
+
+      \hspace{3.9cm}\texttt{t\_bpt\_opts opts)}
+    }
+
+% node size
+
+\name{node size}
+
+\description
+    {
+      This macro-function returns the current number of entries used in
+      the node \textit{node}.
+    }
+
+\declaration
+    {
+      \texttt{t\_bpt\_ndi(T) bpt\_node\_size(T, t\_bpt(T)* bpt,
+                                             t\_bpt\_imm(T)* node)}
+    }
+
+% list
+
+\name{list}
+
+\description
+    {
+      This macro-function returns the head or tail entry of the linked-list
+      composed of the leaf nodes.
+
+      \-
+
+      \textit{opts} specifies the elements looked for: the head through
+      \texttt{BPT\_OPT\_HEAD} or the tail through \texttt{BPT\_OPT\_TAIL}.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_list(T, t\_bpt(T)* bpt, t\_bpt\_imm(T)* node,}
+
+      \hspace{2.4cm}\texttt{t\_bpt\_entry(T)* entry, t\_bpt\_opts opts)}
+    }
+
+% key
+
+\name{key}
+
+\description
+    {
+      This macro-function returns the highest key contained in the node
+      \textit{node}.
+
+      \-
+
+      This macro-function is mainly used by \textit{bpt} even though
+      an advanced \textit{bpt} developer could find it useful.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_key(T, t\_bpt(T)* bpt, t\_bpt\_imm(T)* node,
+                           t\_bpt\_key(T)* key)}
+    }
+
+% update
+
+\name{update}
+
+\description
+    {
+      This macro-function recursively update some values in the parent nodes
+      of node \textit{node}.
+
+      \-
+
+      This macro-function is mainly used by \textit{bpt} itself.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_update(T, t\_bpt(T)* bpt, t\_bpt\_imm(T)* node,
+                              t\_bpt\_opts opts)}
+    }
+
+% foreach
+
+\name{foreach}
+
+\description
+    {
+      This macro-function provides a very easy way for the programmer to
+      go through the records. This function updates \textit{entry} with
+      the next record.
+    }
+
+\declaration
+    {
+      \texttt{bpt\_foreach(T, t\_bpt(T)* bpt, t\_bpt\_entry(T)* entry)}
+    }
+
+A classical balanced tree uses the key as the unique identifier. In
+\textit{bpt}, some entries can have the same key. In this case, the tree
+is say to accept \textbf{collisions}.
+
+Actually, only the \textit{value} field can play the r\^ole of unique
+identifier. Indeed, since the \textit{value} fields represent an address on
+the storage device, it is obvious that two nodes cannot have the
+\textit{value}.
+
+% collide search
+
+\name{collide search}
+
+\description
+    {
+      This macro-function looks for an entry matching the tuple $(key, value)$.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_collide\_search(T, t\_bpt(T)* bpt, t\_bpt\_key(T) key,}
+
+      \hspace{4.3cm}\texttt{t\_bpt\_value(T) value, t\_bpt\_entry(T)* entry)}
+    }
+
+% collide modify
+
+\name{collide modify}
+
+\description
+    {
+      This macro-function modifies an entry possibly in collision.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_collide\_modify(T, t\_bpt(T)* bpt,
+                                       t\_bpt\_entry(T) entry,}
+
+      \hspace{4.3cm}\texttt{t\_bpt\_lfentry(T)* lfentry,
+                            t\_bpt\_unused(T)* unused)}
+    }
+
+% collide remove
+
+\name{collide remove}
+
+\description
+    {
+      This macro-function removes an entry in collision.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_collide\_remove(T, t\_bpt(T)* bpt,
+                                       t\_bpt\_entry(T) entry,}
+
+      \hspace{4.3cm}\texttt{t\_bpt\_unused(T)* unused)}
+    }
+
+% collide next
+
+\name{collide next}
+
+\description
+    {
+      This macro-function returns the next entry in collision.
+    }
+
+\declaration
+    {
+      \texttt{int bpt\_collide\_next(T, t\_bpt(T)* bpt, t\_bpt\_key(T)* key,}
+
+      \hspace{3.9cm}\texttt{t\_bpt\_entry(T)* entry)}
+    }
+
+Note that \textit{bpt} when handling collisions cannot guarantee that entries
+are sorted between multiples nodes. However, entries remain sorted in their
+node, even when \textit{bpt} deals with collisions.
+
+%
+% ---------- callbacks --------------------------------------------------------
+%
+
+\section{Callbacks}
+
+This section describes the callback feature. The \texttt{callback()} callback
+is used by experienced programmers for managing advanced trees. On the other
+hand, the \texttt{addrcmp()}, \texttt{keycmp()} and \texttt{valcmp()}
+provide comparators on different fundamental types. Since these types are
+defined by the programmer, \textit{bpt} does not know how to compare them.
+Finally, the \texttt{load()} and \texttt{unload()} callbacks deal with
+the storage device.
+
+%
+% callback()
+%
+
+\subsection{callback()}
+
+\textit{bpt} was developed in parallel with two important projects:
+the \textit{LSE/OS} nanokernel and a new file system. These two projects
+needed powerful and tunable data structure as these projects wanted to add
+informations to the nodes of the tree.
+
+Suppose the programmer wants to create a tree which describe the reserved areas
+on the hard drive. Besides, the programmer wants to base the allocation of
+new areas on the \textit{Worst Fit Algorithm}. To do that, the tree needs
+additional information, like the size of the free areas between two reserved
+areas so that the largest can be found very quickly. These information will
+be stored in internal and leaf nodes and must be updated every time the
+tree changes.
+
+That is why callbacks were introduced: to inform the program of every
+modification performed on the tree so that additional modifications can be
+done.
+
+If the programmer sets the flag \texttt{BPT\_FLAG\_CALLBACK} with the
+user-defined callback \texttt{callback()} at the tree's initialization time,
+then \texttt{callback()} will be called after each major operation on
+one of the records -- \textit{i.e} leaf nodes entries.
+
+\textit{bpt} ensures consistency when the callback is triggered.
+
+The callback \textit{callback()} is launched with a context, providing some
+information on the operation which modified the tree. There exist only
+\textit{six} different operation types which are described next. The context
+contains the addresses of the leaf nodes and entries which were modified by
+the operation.
+
+Note that the callback context structure's contains node address fields
+which could be set to the value corresponding to an unused address meaning
+that this node must not be treated.
+
+Below are listed the different operation types leading the callback to be
+triggered.
+
+% insert
+
+\subsubsection*{Insert}
+
+Every time a record is inserted in the tree -- \textit{i.e} in a leaf node
+--, an \textit{Insert} callback is launched.
+
+In such a case, the callback context is composed of the following
+meaningfull fields.
+
+\begin{itemize}
+  \item
+    \texttt{t\_bpt\_cb cb} contains the operation type, in this case:
+    \texttt{BPT\_CB\_INSERT}.
+  \item
+    \texttt{t\_bpt\_entry(T) current} represents the newly inserted record.
+  \item
+    \texttt{t\_bpt\_node(T) node} contains the address of the node which
+    was modified by the operation.
+\end{itemize}
+
+% split
+
+\subsubsection*{Split}
+
+When a record is inserted in a node which cannot contain more entries, the
+node is split and the entries are balanced between the two nodes. In such
+a case, a \textit{Split} callback is launched with the following context:
+
+\begin{itemize}
+  \item
+    \texttt{t\_bpt\_cb cb} contains the operation type: \texttt{BPT\_CB\_SPLIT}
+  \item
+    \texttt{t\_bpt\_entry(T) current} represents the newly inserted record.
+  \item
+    \texttt{t\_bpt\_node(T) node1} contains the address of the first node
+    modified by the operation.
+  \item
+    \texttt{t\_bpt\_node(T) node2} contains the address of the second node
+    involved in the splitting operation.
+\end{itemize}
+
+% modify
+
+\subsubsection*{Modify}
+
+A record modification implies a call to the \textit{Modify} callback.
+
+\begin{itemize}
+  \item
+    \texttt{t\_bpt\_cb cb} contains the callback type: \texttt{BPT\_CB\_MODIFY}
+  \item
+    \texttt{t\_bpt\_entry(T) current} contains the modified entry.
+  \item
+    \texttt{t\_bpt\_node(T) node} contains the address of the node involved
+    in the operation.
+\end{itemize}
+
+% delete
+
+\subsubsection*{Delete}
+
+Everytime a record is delete from the tree, the \textit{Delete} callback
+is called with the following context.
+
+\begin{itemize}
+  \item
+    \texttt{t\_bpt\_cb cb} contains the operation type:
+    \texttt{BPT\_CB\_DELETE}
+  \item
+    \texttt{t\_bpt\_entry(T) previous} contains the location of the entry
+    which was preceding the deleted entry.
+  \item
+    \texttt{t\_bpt\_node(T) node} contains the address of the modified node.
+\end{itemize}
+
+% migrate
+
+\subsubsection*{Migrate}
+
+When an entry is deleted from a node and that all the entries of this node
+are moved in another node, a \textit{Migrate} callback is launched. The
+callback context contains the following significant fields.
+
+\begin{itemize}
+  \item
+    \texttt{t\_bpt\_cb cb} contains the operation type:
+    \texttt{BPT\_CB\_MIGRATE}
+  \item
+    \texttt{t\_bpt\_entry(T) previous} references the entry which was
+    preceding the deleted record.
+  \item
+    \texttt{t\_bpt\_node(T) node} contains the address of the node
+    involved in the migration.
+\end{itemize}
+
+% balance
+
+\subsubsection*{Balance}
+
+When an entry is deleted from a node which is then re-balanced, a
+\textit{Balance} callback is triggered.
+
+\begin{itemize}
+  \item
+    \texttt{t\_bpt\_cb cb} contains the callback type:
+    \texttt{BPT\_CB\_BALANCE}
+  \item
+    \texttt{t\_bpt\_entry(T) previous} references the entry which was
+    preceding the deleted entry.
+  \item
+    \texttt{t\_bpt\_node(T) node1} contains the address of the first node
+    involved in the balancing.
+  \item
+    \texttt{t\_bpt\_node(T) node2} contains the address of the second node.
+\end{itemize}
+
+Finally, an example of such a callback:
+
+\begin{verbatim}
+  void                    tree_callback(t_bpt(tree)               *bpt,
+                                        t_bpt_cbctx(tree)         *cbctx)
+  {
+    switch (cbctx->cb)
+      {
+        case BPT_CB_INSERT:
+          tree_callback_insert(bpt, cbctx);
+          break;
+        case BPT_CB_SPLIT:
+          tree_callback_split(bpt, cbctx);
+          break;
+        case BPT_CB_MODIFY:
+          tree_callback_modify(bpt, cbctx);
+          break;
+        case BPT_CB_DELETE:
+          tree_callback_delete(bpt, cbctx);
+          break;
+        case BPT_CB_MIGRATE:
+          tree_callback_migrate(bpt, cbctx);
+          break;
+        case BPT_CB_BALANCE:
+          tree_callback_balance(bpt, cbctx);
+          break;
+      }
+  }
+\end{verbatim}
+
+%
+% load()
+%
+
+\subsection{load()}
+
+The \texttt{load()} callback is called by \textit{bpt} everytime it needs
+to manipulate a new node. This callback is responsible for reading the
+node located at the given address on the storage device.
+
+For instance, a programmer willing to manage a balanced+ tree in main memory
+would need to write a \texttt{load()} callback filling the node structure,
+and doing nothing more. Indeed, needless to read the node from the storage
+device into main memory as the node only reside in main memory.
+
+Below is an example of such a callback for an in-main-memory tree:
+
+\begin{verbatim}
+  void                    tree_load(t_bpt(tree)                   *bpt,
+                                    t_bpt_imm(tree)               *node,
+                                    t_bpt_node(tree)              addr)
+  {
+    node->addr = addr;
+    node->buf = (void *)((unsigned int)addr);
+  }
+\end{verbatim}
+
+%
+% unload()
+%
+
+\subsection{unload()}
+
+The \texttt{unload()} callback is responsible for storing the node on
+the storage device.
+
+\textit{bpt} guarantees that every \texttt{load()} is always followed by
+an \texttt{unload()} even if an error occurs.
+
+%
+% addrcmp()
+%
+
+\subsection{addrcmp()}
+
+The \texttt{addrcmp()} callback compares two addresses.
+
+The compare functions must return zero if the two values are equals.
+Otherwise, these functions must return $-1$ or $1$ depending on which value
+is the highest.
+
+Below is an example with address represented by number, 32-bit integer for
+instance.
+
+\begin{verbatim}
+  int                     tree_addrcmp(t_bpt(tree)                *bpt,
+                                       t_bpt_addr(tree)           addr1,
+                                       t_bpt_addr(tree)           addr2)
+  {
+    if (addr1 < addr2)
+      return (-1);
+
+    return (addr1 > addr2);
+  }
+\end{verbatim}
+
+%
+% keycmp()
+%
+
+\subsection{keycmp()}
+
+The \texttt{keycmp()} callback compares two keys.
+
+%
+% valcmp()
+%
+
+\subsection{valcmp()}
+
+The \texttt{valcmp()} callback compares two values.
+
+%
+% ---------- tips -------------------------------------------------------------
+%
+
+\section{Tips}
+
+This section gives the reader some tips to avoid common pitfalls.
+
+\name{architecture-dependent}
+
+The programmer should pack and/or align the inode and leaf structures.
+Indeed some microprocessors do not accept unaligned memory accesses.
+
+\name{caching}
+
+The examples and tests given in the \textit{bpt} releases are very simple
+and quite inefficient.
+
+Therefore, the programmer should use caches for storing the \textit{unused}
+blocks so that the \textit{unused} array can be built very quickly without
+making multiple calls to \texttt{malloc()} and \texttt{free()}.
+
+In addition, caching should also be used for keeping nodes when they are
+unloaded. However, the operating system through the device driver should
+already provide such a caching.
+
+%
+% ---------- experiments ------------------------------------------------------
+%
+
+\section{Experiments}
+
+Some experiments have been performed. These allowed a direct comparison
+between the \textit{bpt} implementation and a linked-list implementation.
+
+Obviously, the balanced+ tree should be faster than the linked list but the
+author wanted to compare these two implementations in different contexts.
+
+In addition, these experiements allowed the author to validate the
+implementation of \textit{bpt} as well as to find a way to debug the
+implementation in contexts involving more than $500.000$ operations before
+any error actually occurs.
+
+%
+% set 1
+%
+
+\subsection*{Set 1}
+
+The first set of tests is composed of basic ones to verify whether every
+operation is correct: add, remove etc..
+
+\name{linked list}
+
+\begin{verbatim}
+  add0:                   0.41
+  rem0:                   0.41
+  rem1:                   0.40
+  rem2:                   0.45
+  rem3:                   0.42
+\end{verbatim}
+
+\name{b+tree}
+
+\begin{verbatim}
+  add0:                   0.78
+  rem0:                   0.82
+  rem1:                   0.125
+  rem2:                   0.117
+  rem3:                   0.87
+\end{verbatim}
+
+%
+% set 2
+%
+
+\subsection*{Set 2}
+
+The second set is composed of tests with hundreds of operations performed.
+We can notice that there is no performance differences between the linked list
+and the tree. This is mainly due to the nature of these tests. Indeed, these
+tests were automatically generated implying an equal number of add, modify
+and remove operations. Therefore, the data structure is always kept small
+since there is a high probability that add operations are followed by a
+remove etc. That is why the linked list behave well in these tests.
+
+\name{linked list}
+
+\begin{verbatim}
+  balancing0:             0.43
+  balancing1:             0.83
+  balancing2:             0.836
+  balancing3:             0.1612
+  balancing4:             0.473
+  balancing5:             0.1858
+  balancing6:             0.15230
+  balancing7:             0.31356
+  balancing8:             0.800202
+  balancing9:             5.289799
+\end{verbatim}
+
+\textbf{b+tree}
+
+\begin{verbatim}
+  balancing0:             0.154
+  balancing1:             0.368
+  balancing2:             0.4250
+  balancing3:             0.10299
+  balancing4:             0.4906
+  balancing5:             0.13008
+  balancing6:             0.171153
+  balancing7:             0.50939
+  balancing8:             0.951391
+  balancing9:             1.234475
+\end{verbatim}
+
+%
+% set 3
+%
+
+\subsection*{Set 3}
+
+The last set is composed of tests which we called \textit{``real''}. Indeed,
+these tests start by creating an environnment: performing hundreds of add
+operations. Then, having a large data structure, the tests perform hundreds
+of operations: add, modify, remove etc.
+
+\name{linked list}
+
+\begin{verbatim}
+  real0:                  0.11605
+  real1:                  27.640013
+  real2:                  1.764065
+  real3:                  0.3144
+  real4:                  1547.606482
+  real5:                  0.114
+  real6:                  11.936664
+  real7:                  0.318657
+  real8:                  6571.993680
+  real9:                  702.880400
+\end{verbatim}
+
+\name{b+tree}
+
+\begin{verbatim}
+  real0:                  0.16503
+  real1:                  0.214616
+  real2:                  0.144732
+  real3:                  0.14892
+  real4:                  1.931057
+  real5:                  0.805
+  real6:                  0.637856
+  real7:                  0.963900
+  real8:                  7.61801
+  real9:                  1.968798
+\end{verbatim}
+
+Note that these tests were run on a \textit{AMD Turion 64-bit 1.8Ghz}
+with \textit{1GB RAM} running a \textit{Linux 2.6.20} operating system.
+
+%
+% ---------- example ----------------------------------------------------------
+%
+
+\section{Example}
+
+Let's see a simple example.
+
+\begin{verbatim}
+  #include <sys/types.h>
+  #include <stdlib.h>
+  #include ``bpt.h''
+
+  #define TREE_NODESZ             4096
+  #define TREE_UADDR              -1
+  #define TREE_UKEY               -1
+  #define TREE_UVAL               -1
+  #define TREE_ADDR_T             u_int32_t
+  #define TREE_KEY_T              u_int32_t
+  #define TREE_VALUE_T            u_int32_t
+  #define TREE_FLAGS              BPT_FLAG_COLLIDE
+
+  typedef struct          s_tree_inentry
+  {
+    TREE_ADDR_T           value;
+    TREE_KEY_T            key;
+  }                       t_tree_inentry;
+
+  typedef struct          s_tree_lfentry
+  {
+    TREE_VALUE_T          value;
+    TREE_KEY_T            key;
+    u_int8_t              klc;
+  }                       t_tree_lfentry;
+
+  bpt_make(tree, BPT_NDI_T, BPT_UNI_T, BPT_NODES_T,
+           BPT_HEIGHT_T, TREE_ADDR_T, TREE_KEY_T, TREE_VALUE_T,
+           t_tree_inentry, t_tree_lfentry, key, value);
+
+  void            tree_load(t_bpt(tree)           *bpt,
+                            t_bpt_imm(tree)       *node,
+                            t_bpt_node(tree)      addr)
+  {
+    node->addr = addr;
+    node->buf = (void *)((unsigned int)addr);
+
+    /*
+     * nothing to do because we decided to build a tree in main memory
+     */
+  }
+
+  void            tree_unload(t_bpt(tree)         *bpt,
+                              t_bpt_imm(tree)     *node)
+  {
+    /*
+     * nothing to do
+     */
+  }
+
+  int             tree_addrcmp(t_bpt(tree)         *bpt,
+                               t_bpt_addr(tree)    addr1,
+                                t_bpt_addr(tree)    addr2)
+  {
+    if (addr1 < addr2)
+      return (-1);
+
+    return (addr1 > addr2);
+  }
+
+  int             tree_keycmp(t_bpt(tree)         *bpt,
+                              t_bpt_key(tree)     key1,
+                              t_bpt_key(tree)     key2)
+  {
+    if (key1 < key2)
+      return (-1);
+
+    return (key1 > key2);
+  }
+
+  int             tree_valcmp(t_bpt(tree)         *bpt,
+                              t_bpt_value(tree)   value1,
+                              t_bpt_value(tree)   value2)
+  {
+    if (value1 < value2)
+      return (-1);
+
+    return (value1 > value2);
+  }
+
+  void                    tree_make_unused(t_bpt_unused(tree)     *unused,
+                                           t_bpt_addr(tree)       *array,
+                                           t_bpt_uni(tree)        size,
+                                           t_bpt_uni(tree)        alloc)
+  {
+    t_bpt_uni(tree)       i;
+
+    unused->array = array;
+    unused->index = alloc - 1;
+
+    for (i = 0; i < size; i++)
+      unused->array[i] = (t_bpt_addr(tree))TREE_UADDR;
+
+    for (i = 0; i < alloc; i++)
+      unused->array[i] = (t_bpt_addr(tree))malloc(TREE_NODESZ);
+  }
+
+  void                    tree_clean_unused(t_bpt_unused(tree)    *unused,
+                                            t_bpt_uni(tree)       size)
+  {
+    t_bpt_uni(tree)       i;
+
+    for (i = 0; i < size; i++)
+      if (unused->array[i] != TREE_UADDR)
+        free((void *)unused->array[i]);
+  }
+
+  void                    tree_init(t_bpt(tree)                   *bpt)
+  {
+    t_bpt_uni(tree)       alloc = BPT_INIT_ALLOC();
+    t_bpt_uni(tree)       size = BPT_INIT_SIZE();
+    t_bpt_addr(tree)      array[size];
+    t_bpt_unused(tree)    unused;
+
+    tree_make_unused(&unused, array, size, alloc);
+
+    if (bpt_init(tree, bpt, TREE_NODESZ, TREE_UADDR, TREE_UKEY, TREE_UVAL,
+                 TREE_FLAGS, BPT_BALANCING_PLUS, tree_load, tree_unload,
+                 tree_addrcmp, tree_keycmp, tree_valcmp, NULL, NULL,
+                 &unused) != 0)
+      {
+        tree_clean_unused(&unused, size);
+        fprintf(stderr, ``tree: cannot initialize the tree\n'');
+        exit(EXIT_FAILURE);
+      }
+
+    tree_clean_unused(&unused, size);
+  }
+
+  int                     main(int                                argc,
+                               char                               **argv)
+  {
+    t_bpt(tree)           bpt;
+
+    tree_init(&bpt);
+
+    /*
+     * your code here: add, modify, remove ...
+     */
+
+    return (0);
+  }
+\end{verbatim}
+
+The reader interested in more complex and/or complete examples should take
+a look to the \textit{bpt} release which contains examples and tests.
+
+\end{document}
